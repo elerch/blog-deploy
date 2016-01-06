@@ -52,3 +52,20 @@ describe('unpackTarball', function() {
     });
   });
 });
+
+// Integration
+describe('downloadTarball', function() {
+  it('should download from Github', function(done) {
+    var repo = {
+      name: 'blog',
+      owner: { name: 'elerch' },
+      archive_url: 'https://api.github.com/repos/elerch/blog/{archive_format}{/ref}'
+    };
+    var tmpDir = os.tmpdir();
+    githubPull.downloadTarball(repo, 'cb2ebf0', function(err, location) {
+      expect(err).not.to.exist;
+      expect(location).to.equal(tmpDir);
+      done();
+    });
+  });
+});
