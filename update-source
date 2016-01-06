@@ -1,3 +1,20 @@
-zip deployment.zip src/*
-aws s3 cp deployment.zip s3://blog-deploy/
-rm deployment.zip
+#!/bin/sh
+ZIP_FILE=deployment.zip
+BUCKET_NAME=blog-deploy
+# Lambda function name defined by CloudFormation and does not appear
+# to be overridden. The prefix will be static (using bucket name?) plus
+# the resource name in the template
+LAMBDA_FUNCTION_SEARCH=blog-deploy-DeploymentLambda-
+FN_NAME=`aws lambda list-functions --output table | fgrep $LAMBDA_FUNCTION_SEARCH | fgrep FunctionName | sed s/FunctionName\|// | sed "s/ //g" | sed s/\|//g`
+
+# Create source package - everything under src/
+pushd src >/dev/null && zip $ZIP_FILE * >/dev/null
+aws s3 mv $ZIP_FILE s3://$BUCKET_NAME/
+popd >/dev/null
+
+# Update function code
+aws lambda update-function-code \
+  --function-name $FN_NAME      \
+  --s3-bucket $BUCKET_NAME      \
+  --s3-key $ZIP_FILE 
+
