@@ -31,6 +31,28 @@
                 ]
              }
 	  },
+          "GithubAccessPolicy" : {
+            "Type" : "AWS::IAM::Policy",
+            "Properties" : {
+               "PolicyName" : "GithubSNSNotificationBlog",
+               "PolicyDocument" : {
+                 "Version": "2012-10-17",
+                 "Statement": [
+                   {
+                     "Action": [
+                       "sns:Publish"
+                     ],
+                     "Sid": "Stmt0000000000000",
+                     "Resource": [
+                       {"Fn::Join": ["", ["arn:aws:sns:", {"Ref": "AWS::Region"}, ":", {"Ref": "AWS::AccountId"}, ":blog-deploy-committed"]] }
+                     ],
+                     "Effect": "Allow"
+                   }
+                 ]
+               },
+               "Users" : [ "github-sns" ]
+            }
+          },
           "DeploymentLambda" : {
              "Type" : "AWS::Lambda::Function",
              "Properties" : {
