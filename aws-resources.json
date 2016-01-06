@@ -44,6 +44,14 @@
                 }
              }
           },
+          "DeploymentLambdaSNSPermission" : {
+             "Type" : "AWS::Lambda::Permission",
+             "Properties" : {
+               "Action": "lambda:InvokeFunction",
+               "FunctionName" : {"Fn::GetAtt":["DeploymentLambda","Arn"]},
+               "Principal": "sns.amazonaws.com"
+             }
+          },
           "DeploymentLambdaRole" : {
              "Type" : "AWS::IAM::Role",
              "Properties" : {
