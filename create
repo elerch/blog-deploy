@@ -1,1 +1,2 @@
-aws cloudformation create-stack --stack-name blog-deploy --template-body file://deployment-bucket.json --capabilities CAPABILITY_IAM
+#!/bin/sh
+aws cloudformation create-stack --stack-name blog-deploy --template-body file://aws-resources.json --capabilities CAPABILITY_IAM
