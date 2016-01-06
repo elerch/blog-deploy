@@ -70,6 +70,15 @@
                        "Action": [
                           "s3:*" 
                        ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:CreateLogGroup",
+                        "logs:CreateLogStream",
+                        "logs:PutLogEvents"
+                      ],
+                      "Resource": "arn:aws:logs:*:*:*"
                     } ]
                  }
               } ]
