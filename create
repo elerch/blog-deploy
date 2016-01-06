@@ -1,0 +1,1 @@
+aws cloudformation create-stack --stack-name blog-deploy --template-body file://deployment-bucket.json --capabilities CAPABILITY_IAM

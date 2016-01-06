@@ -1,12 +1,79 @@
 {
       "AWSTemplateFormatVersion" : "2010-09-09",
+      "Conditions" : {
+         "CreateBucket": { "Fn::Equals": [ { "Ref": "pCreateBucket" }, "true" ] }
+      },
+      "Parameters" : {
+         "pCreateBucket": {
+            "Description": "Create the bucket true/false [false]",
+            "Type": "String",
+            "Default": "false"
+         }
+      },
       "Resources" : {
           "S3Bucket" : {
              "Type" : "AWS::S3::Bucket",
              "Properties" : {
 		 "BucketName": "blog-deploy"
              },
-             "DeletionPolicy" : "Retain"
+             "DeletionPolicy" : "Retain",
+             "Condition" : "CreateBucket"
+          },
+	  "SNSTopic" : {
+	     "Type" : "AWS::SNS::Topic",
+	     "Properties" : {
+                "TopicName": "blog-deploy-committed",
+	        "Subscription" : [
+                   {
+                     "Endpoint" : {"Fn::GetAtt":["DeploymentLambda","Arn"]},
+                     "Protocol" : "lambda"
+                   }
+                ]
+             }
+	  },
+          "DeploymentLambda" : {
+             "Type" : "AWS::Lambda::Function",
+             "Properties" : {
+                "Handler": "index.handler",
+                "Role" : {"Fn::GetAtt":["DeploymentLambdaRole","Arn"]},
+                "Runtime" : "nodejs",
+	        "Timeout" : 10,
+                "Code" : {
+                   "S3Bucket" : "blog-deploy",
+                   "S3Key" : "deployment.zip"
+                }
+             }
+          },
+          "DeploymentLambdaRole" : {
+             "Type" : "AWS::IAM::Role",
+             "Properties" : {
+                "AssumeRolePolicyDocument" : {
+                   "Version": "2012-10-17",
+                   "Statement": [
+                     {
+                       "Sid": "",
+                       "Effect": "Allow",
+                       "Principal": {
+                         "Service": "lambda.amazonaws.com"
+                       },
+                       "Action": "sts:AssumeRole"
+                     }
+                   ]
+                 },
+              "Policies": [ {
+                 "PolicyName" : "LambdaDeployS3", 
+                 "PolicyDocument" : {
+                    "Version" : "2012-10-17",
+                    "Statement": [ {
+                       "Effect": "Allow",
+                       "Resource": "arn:aws:s3:::emil.lerch.org",
+                       "Action": [
+                          "s3:*" 
+                       ]
+                    } ]
+                 }
+              } ]
+             }
           }
       }
 }

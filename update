@@ -1,0 +1,1 @@
+aws cloudformation update-stack --stack-name blog-deploy --template-body file://deployment-bucket.json

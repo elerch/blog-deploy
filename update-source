@@ -1,0 +1,3 @@
+zip deployment.zip src/*
+aws s3 cp deployment.zip s3://blog-deploy/
+rm deployment.zip
