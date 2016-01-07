@@ -59,8 +59,8 @@ describe('downloadTarball', function() {
     var repo = {
       name: 'blog',
       owner: { name: 'elerch' },
-      archive_url: 'https://api.github.com/repos/elerch/blog/{archive_format}{/ref}'
-    };
+      archive_url: 'https://api.github.com/repos/elerch/blog/{archive_format}{/ref}' // eslint-disable-line camelcase
+    }; // archive_url is the property name coming from github, so it's out of our control
     var tmpDir = os.tmpdir();
     githubPull.downloadTarball(repo, 'cb2ebf0', function(err, location) {
       expect(err).not.to.exist;
