@@ -8,7 +8,7 @@ LAMBDA_FUNCTION_SEARCH=blog-deploy-DeploymentLambda-
 FN_NAME=`aws lambda list-functions --output table | fgrep $LAMBDA_FUNCTION_SEARCH | fgrep FunctionName | sed s/FunctionName\|// | sed "s/ //g" | sed s/\|//g`
 
 # Create source package - everything under src/
-pushd src >/dev/null && zip $ZIP_FILE * >/dev/null
+pushd src >/dev/null && zip -r $ZIP_FILE * -x "*node_modules*" -x "*test*" >/dev/null
 aws s3 mv $ZIP_FILE s3://$BUCKET_NAME/
 popd >/dev/null
 
