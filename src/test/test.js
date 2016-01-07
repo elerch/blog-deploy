@@ -13,6 +13,7 @@ var expect          = require('chai').expect;
 // Our stuff
 var awsfilter       = require('../awsfilter');
 var githubPull      = require('../github-pull');
+var hugo            = require('../hugo.js'); // distinguish from the binary
 
 describe('extractSnsMessage', function() {
   var sampleSNSMessage;
@@ -54,18 +55,46 @@ describe('unpackTarball', function() {
 });
 
 // Integration
-describe('downloadTarball', function() {
-  it('should download from Github', function(done) {
-    var repo = {
-      name: 'blog',
-      owner: { name: 'elerch' },
-      archive_url: 'https://api.github.com/repos/elerch/blog/{archive_format}{/ref}' // eslint-disable-line camelcase
-    }; // archive_url is the property name coming from github, so it's out of our control
-    var tmpDir = os.tmpdir();
-    githubPull.downloadTarball(repo, 'cb2ebf0', function(err, location) {
-      expect(err).not.to.exist;
-      expect(location).to.equal(tmpDir);
-      done();
+describe('integration tests', function() {
+  var repo = {
+    name: 'blog',
+    owner: { name: 'elerch' },
+    archive_url: 'https://api.github.com/repos/elerch/blog/{archive_format}{/ref}' // eslint-disable-line camelcase
+  }; // archive_url is the property name coming from github, so it's out of our control
+  var shorthash = 'cb2ebf0';
+  var tmpDir = os.tmpdir();
+  describe('downloadTarball', function() {
+    it('should download from Github', function(done) {
+      githubPull.downloadTarball(repo, shorthash, function(err, location) {
+        expect(err).not.to.exist;
+        expect(location).to.equal(tmpDir);
+        done();
+      });
+    });
+  });
+  describe('generateSite', function() {
+    it('should generate the site from the tarball', function(done) {
+      githubPull.unpackTarball('test/elerch-blog-cb2ebf0.tar.gz', tmpDir, function(err, location) {
+        var options = {
+          theme: 'gindoro'
+        };
+        var basePath = path.join(location, githubPull.unpackDirectory(repo, shorthash));
+        // testing only - don't do this!
+        if (!fs.existsSync(path.join(basePath, 'themes'))) {
+          fs.linkSync(path.join(process.cwd(), 'themes'), path.join(basePath, 'themes'));
+        }
+        expect(err).not.to.exist;
+        hugo.generateSite(
+          basePath,
+          options,
+          function(err2, generatedLocation) {
+            if (err2) { console.log(err2.message); }
+            expect(err2).not.to.exist;
+            expect(generatedLocation).to.equal(path.join(basePath, 'public'));
+            done();
+          }
+        );
+      });
     });
   });
 });
