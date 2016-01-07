@@ -1,7 +1,7 @@
 'use strict';
 
 var fs           = require('fs');
-var https        = require('https');
+var https        = require('follow-redirects').https;
 var url          = require('url');
 var os           = require('os');
 var childProcess = require('child_process');
@@ -17,6 +17,9 @@ function downloadFileFromUrl(address, dest, cb) {
     'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
   };
   https.get(opt, function handleResponse(response) {
+    // console.log('STATUS:' + response.statusCode);
+    // console.log('HEADERS:' + JSON.stringify(response.headers));
+
     response.pipe(file);
     file.on('finish', function closeFile() {
       file.close(cb);  // close() is async, call cb after close completes.
