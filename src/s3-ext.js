@@ -25,6 +25,7 @@ function contentTypeByName(fileName) {
   if (fn.indexOf('.js') >= 0) { return 'application/x-javascript'; }
   if (fn.indexOf('.png') >= 0) { return 'image/png'; }
   if (fn.indexOf('.jpg') >= 0) { return 'image/jpg'; }
+  if (fn.indexOf('.xml') >= 0) { return 'application/xml'; }
 
   return 'application/octet-stream';
 }
