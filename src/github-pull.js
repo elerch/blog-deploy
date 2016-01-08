@@ -39,10 +39,11 @@ function unpackTarball(file, location, cb) {
 
   childProcess.exec('tar -xzvf ' + absoluteFile, {
     cwd: location
-  }, function done(err, stdout) {
+  }, function done(err, stdout, stderr) {
     var subdir;
     if (err) { cb(err); return; }
-    subdir = stdout.split(/\r?\n/)[0].replace('x ', '');
+    subdir = stdout.split(/\r?\n/)[0].replace('x ', ''); // linux
+    subdir = subdir || stderr.split(/\r?\n/)[0].replace('x ', ''); // mac
     cb(err, path.join(location, subdir));
   });
 }

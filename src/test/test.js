@@ -76,7 +76,8 @@ describe('integration tests', function() {
     it('should generate the site from the tarball', function(done) {
       githubPull.unpackTarball('test/elerch-blog-cb2ebf0.tar.gz', tmpDir, function(err, location) {
         var options = {
-          theme: 'gindoro'
+          theme: 'gindoro',
+          useGlobalHugo: true
         };
         // testing only - don't do this!
         if (!fs.existsSync(path.join(location, 'themes'))) {

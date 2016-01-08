@@ -8,10 +8,14 @@ exports = module.exports;
 
 function generateSite(location, options, cb) {
   var hugoopts = '';
+  var hugo = 'hugo';
   if (options.theme) { hugoopts += ' --theme=' + options.theme; }
   if (options.buildDrafts) { hugoopts += ' --buildDrafts'; }
-
-  childProcess.exec(path.join(process.cwd(), 'hugo') + hugoopts, {
+  // If this option is set we'll use hugo on the path
+  // otherwise we'll call our local hugo, which is only valid for
+  // amd64 linux
+  if (!options.useGlobalHugo) { hugo = path.join(process.cwd(), 'hugo'); }
+  childProcess.exec(hugo + hugoopts, {
     cwd: location
   }, function done(err, stdout, stderr) {
     if (err) {
