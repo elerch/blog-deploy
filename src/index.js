@@ -32,7 +32,7 @@ function copySite(src, bucket, destPrefix, cb) {
   console.log('copying from ' + src + ' to ' + bucket + ':' + (destPrefix || '(root)'));
   s3ext.copyAllRecursive(
     src, destPrefix, 'us-west-2',
-    {Bucket: bucket, ACL: 'public-read'},
+    {Bucket: bucket, ACL: 'public-read', StorageClass: 'REDUCED_REDUNDANCY'},
     function complete(err) {
       if (err) {console.log('error during copy'); console.log(err); cb(err); return; }
       console.log('file copy complete');
