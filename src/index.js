@@ -46,6 +46,7 @@ function generateAndCopySite(unpackedLocation, options, s3Destination, cb) {
     options,
     function generated(err, location) {
       if (err) { cb(err); return; }
+      console.log('generated ' + siteVersion);
       copySite(location, 's3://' + s3Destination + bucketKeyPrefix, function copyComplete(copyErr) {
         if (copyErr) { cb(err); return; }
         if (siteVersion === 'development') { cb(); return; }
