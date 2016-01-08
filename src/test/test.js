@@ -14,6 +14,7 @@ var expect          = require('chai').expect;
 var awsfilter       = require('../awsfilter');
 var githubPull      = require('../github-pull');
 var hugo            = require('../hugo.js'); // distinguish from the binary
+var s3ext           = require('../s3-ext');
 
 describe('extractSnsMessage', function() {
   var sampleSNSMessage;
@@ -94,6 +95,14 @@ describe('integration tests', function() {
             done();
           }
         );
+      });
+    });
+  });
+  describe('copyAllRecursive', function() {
+    it('should copy all files recursively', function(done) {
+      s3ext.copyAllRecursive('test/', 'testCopy/', 'us-west-2', {Bucket: 'emil.lerch.org'}, function(err) {
+        expect(err).not.to.exist;
+        done();
       });
     });
   });
