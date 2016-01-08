@@ -14,10 +14,16 @@ exports = module.exports;
 function setupThemeSymLink(src, dest, cb) {
   var themeSrc = path.join(src, 'themes');
   var themeDst = path.join(dest, 'themes');
-  fs.link(themeSrc, themeDst, function linkCallback(err){
+  fs.symlink(themeSrc, themeDst, function linkCallback(err){
     if (!err || err.code === 'EEXIST') { cb(); return; }
     // it's really an error, it doesn't just exist
-    cb(err);
+    childProcess.exec('ls /tmp', function lsDone(lserr, stdout){
+      console.log('dest path: ' + themeDst);
+      console.log('error linking. ls of /tmp directory: ');
+      console.log(stdout);
+      console.log(fs.existsSync(themeSrc));
+      cb(err);
+    });
   });
 }
 
