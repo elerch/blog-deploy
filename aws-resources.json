@@ -96,7 +96,7 @@
             "Statement": [ 
               {
                 "Effect": "Allow",
-                "Resource": "arn:aws:s3:::emil.lerch.org",
+                "Resource": "arn:aws:s3:::emil.lerch.org/*",
                 "Action": [
                   "s3:*" 
                 ]
