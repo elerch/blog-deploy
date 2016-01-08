@@ -1,7 +1,5 @@
 'use strict';
 
-// var fs           = require('fs');
-// var os           = require('os');
 var childProcess = require('child_process');
 var path         = require('path');
 
@@ -15,8 +13,13 @@ function generateSite(location, options, cb) {
 
   childProcess.exec(path.join(process.cwd(), 'hugo') + hugoopts, {
     cwd: location
-  }, function done(err) {
-    if (err) { cb(err); return; }
+  }, function done(err, stdout, stderr) {
+    if (err) {
+      console.log('error calling hugo. stdout: ' + stdout);
+      console.log('stderr: ' + stderr);
+      cb(err);
+      return;
+    }
     cb(err, path.join(location, 'public'));
   });
 }
