@@ -68,17 +68,15 @@ exports.handler = function updateSite(event, context) {
 
   console.log('downloading repository tarball: ' + unpackDirectory);
   githubPull.downloadTarball(repo, shorthash, function downloaded(err, location) {
-    var unpackedLocation;
     if (err) { console.log(err); context.fail(new Error('error downlading tarball')); return; }
-    unpackedLocation = path.join(location, unpackDirectory);
-    console.log('tarball received/unpacked to: ' + unpackedLocation);
-    setupThemeSymLink(process.cwd(), unpackedLocation, function linked(symErr) {
+    console.log('tarball received/unpacked to: ' + location);
+    setupThemeSymLink(process.cwd(), location, function linked(symErr) {
       var options;
-      if (symErr) { console.log(symErr); context.fail(new Error('error setting themes sym link', symErr)); return; }
+      if (symErr) { console.log(symErr); context.fail(new Error('error setting themes sym link')); return; }
       options = {
         theme: 'gindoro'
       };
-      generateAndCopySite(unpackedLocation, options, 'emil.lerch.org', function copied(generationError) {
+      generateAndCopySite(location, options, 'emil.lerch.org', function copied(generationError) {
         if (generationError) {
           console.log(generationError);
           context.fail(new Error('failed to generate/copy'));
