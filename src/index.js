@@ -85,6 +85,7 @@ exports.handler = function updateSite(event, context) {
           context.fail(new Error('failed to generate/copy'));
           return;
         }
+        console.log('generated site successfully');
         context.succeed('generated site successfully');
         return;
       });

@@ -16,6 +16,18 @@ function clone (o) {
   });
   return ret;
 }
+function contentTypeByName(fileName) {
+  var fn = fileName.toLowerCase();
+
+  if (fn.indexOf('.html') >= 0) { return 'text/html'; }
+  if (fn.indexOf('.css') >= 0) { return 'text/css'; }
+  if (fn.indexOf('.json') >= 0) { return 'application/json'; }
+  if (fn.indexOf('.js') >= 0) { return 'application/x-javascript'; }
+  if (fn.indexOf('.png') >= 0) { return 'image/png'; }
+  if (fn.indexOf('.jpg') >= 0) { return 'image/jpg'; }
+
+  return 'application/octet-stream';
+}
 
 function copyAllRecursive(src, destKeyPrefix, region, params, cb) {
   var absoluteSrc = path.resolve(src);
@@ -35,6 +47,7 @@ function copyAllRecursive(src, destKeyPrefix, region, params, cb) {
             itemParams.Key = itemParams.Key.substr(1);
           }
           itemParams.Body = fileBuffer;
+          itemParams.ContentType = contentTypeByName(item);
           // copy item (put, since we're adding from local)
           s3.putObject(itemParams, asyncCb);
         });
