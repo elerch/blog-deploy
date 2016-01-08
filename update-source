@@ -7,11 +7,16 @@ BUCKET_NAME=blog-deploy
 LAMBDA_FUNCTION_SEARCH=blog-deploy-DeploymentLambda-
 FN_NAME=`aws lambda list-functions --output table | fgrep $LAMBDA_FUNCTION_SEARCH | fgrep FunctionName | sed s/FunctionName\|// | sed "s/ //g" | sed s/\|//g`
 DIR=`dirname $0`
-pushd $DIR
+pushd $DIR >/dev/null
 # Create source package - everything under src/
 pushd src >/dev/null && \
 zip -r $ZIP_FILE * -x "*node_modules*" -x "*test*" >/dev/null && \
-zip -r $ZIP_FILE node_modules/aws-sdk node_modules/follow-redirects > /dev/null && \
+zip -r $ZIP_FILE                \
+ node_modules/aws-sdk           \
+ node_modules/follow-redirects  \
+ node_modules/recursive-readdir \
+ node_modules/async             \
+ > /dev/null && \
 aws s3 mv $ZIP_FILE s3://$BUCKET_NAME/
 popd >/dev/null
 
@@ -20,5 +25,5 @@ aws lambda update-function-code \
   --function-name $FN_NAME      \
   --s3-bucket $BUCKET_NAME      \
   --s3-key $ZIP_FILE 
-popd
+popd >/dev/null
 
