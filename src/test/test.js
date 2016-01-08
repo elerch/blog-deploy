@@ -43,7 +43,7 @@ describe('unpackTarball', function() {
     var tmpDir = os.tmpdir();
     githubPull.unpackTarball('test/elerch-blog-cb2ebf0.tar.gz', tmpDir, function(err, location) {
       expect(err).not.to.exist;
-      expect(location).to.equal(tmpDir); // Note: *not* the subdir inside the github tarball
+      expect(location).to.equal(path.join(tmpDir, 'elerch-blog-cb2ebf0/'));
       fs.stat(path.join(tmpDir, 'elerch-blog-cb2ebf0'), function(err2, stats) {
         expect(err2).not.to.exist;
         expect(stats).to.exist;
@@ -67,7 +67,7 @@ describe('integration tests', function() {
     it('should download from Github', function(done) {
       githubPull.downloadTarball(repo, shorthash, function(err, location) {
         expect(err).not.to.exist;
-        expect(location).to.equal(tmpDir);
+        expect(location).to.equal(path.join(tmpDir, 'elerch-blog-cb2ebf0/'));
         done();
       });
     });
@@ -78,19 +78,18 @@ describe('integration tests', function() {
         var options = {
           theme: 'gindoro'
         };
-        var basePath = path.join(location, githubPull.unpackDirectory(repo, shorthash));
         // testing only - don't do this!
-        if (!fs.existsSync(path.join(basePath, 'themes'))) {
-          fs.linkSync(path.join(process.cwd(), 'themes'), path.join(basePath, 'themes'));
+        if (!fs.existsSync(path.join(location, 'themes'))) {
+          fs.linkSync(path.join(process.cwd(), 'themes'), path.join(location, 'themes'));
         }
         expect(err).not.to.exist;
         hugo.generateSite(
-          basePath,
+          location,
           options,
           function(err2, generatedLocation) {
             if (err2) { console.log(err2.message); }
             expect(err2).not.to.exist;
-            expect(generatedLocation).to.equal(path.join(basePath, 'public'));
+            expect(generatedLocation).to.equal(path.join(location, 'public'));
             done();
           }
         );

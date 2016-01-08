@@ -37,11 +37,13 @@ function unpackTarball(file, location, cb) {
   }
   // Does not work on Windows
 
-  childProcess.exec('tar -xzf ' + absoluteFile, {
+  childProcess.exec('tar -xzvf ' + absoluteFile, {
     cwd: location
-  }, function done(err) {
+  }, function done(err, stdout) {
+    var subdir;
     if (err) { cb(err); return; }
-    cb(err, location);
+    subdir = stdout.split(/\r?\n/)[0].replace('x ', '');
+    cb(err, path.join(location, subdir));
   });
 }
 function unpackDirectory(githubRepository, shortCommitId) {
