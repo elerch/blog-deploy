@@ -3,6 +3,7 @@
 var awsfilter       = require('./awsfilter');
 var githubPull      = require('./github-pull');
 var hugo            = require('./hugo.js'); // distinguish from the binary
+var s3ext           = require('./s3-ext');
 
 var fs           = require('fs');
 var path         = require('path');
@@ -27,14 +28,16 @@ function setupThemeSymLink(src, dest, cb) {
   });
 }
 
-function copySite(src, dest, cb) {
-  // to keep the package small for deployment to Lambda
-  // we assume that the sdk is installed and so we can just execute
-  // in a child process rather than using npm install aws-sdk
-  // Lambda has the SDK installed and available
-  var cmdLine = 'aws s3 cp ' + src + ' ' + dest + ' --recursive --acl public-read';
-  console.log('copying files. Command line: ' + cmdLine);
-  childProcess.exec(cmdLine, cb);
+function copySite(src, bucket, destPrefix, cb) {
+  console.log('copying from ' + src + ' to ' + bucket + ':' + (destPrefix || '(root)'));
+  s3ext.copyAllRecursive(
+    src, destPrefix, 'us-west-2',
+    {Bucket: bucket, ACL: 'public-read'},
+    function complete(err) {
+      if (err) {console.log('error during copy'); console.log(err); cb(err); return; }
+      console.log('file copy complete');
+      cb();
+    });
 }
 
 function generateAndCopySite(unpackedLocation, options, s3Destination, cb) {
@@ -47,7 +50,7 @@ function generateAndCopySite(unpackedLocation, options, s3Destination, cb) {
     function generated(err, location) {
       if (err) { cb(err); return; }
       console.log('generated ' + siteVersion);
-      copySite(location, 's3://' + s3Destination + bucketKeyPrefix, function copyComplete(copyErr) {
+      copySite(location, s3Destination, bucketKeyPrefix, function copyComplete(copyErr) {
         if (copyErr) { cb(err); return; }
         if (siteVersion === 'development') { cb(); return; }
         options.buildDrafts = true;
@@ -82,7 +85,7 @@ exports.handler = function updateSite(event, context) {
           context.fail(new Error('failed to generate/copy'));
           return;
         }
-        context.success('generated site successfully');
+        context.succeed('generated site successfully');
         return;
       });
     });

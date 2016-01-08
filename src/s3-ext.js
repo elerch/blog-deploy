@@ -31,6 +31,9 @@ function copyAllRecursive(src, destKeyPrefix, region, params, cb) {
         fs.readFile(path.join(absoluteSrc, item), function hazTheFile(fileErr, fileBuffer) {
           if (fileErr) { asyncCb(fileErr); return; }
           itemParams.Key = (destKeyPrefix + item).replace('//', '/');
+          if (itemParams.Key[0] === '/') {
+            itemParams.Key = itemParams.Key.substr(1);
+          }
           itemParams.Body = fileBuffer;
           // copy item (put, since we're adding from local)
           s3.putObject(itemParams, asyncCb);
