@@ -5,7 +5,7 @@ BUCKET_NAME=blog-deploy
 # to be overridden. The prefix will be static (using bucket name?) plus
 # the resource name in the template
 LAMBDA_FUNCTION_SEARCH=blog-deploy-DeploymentLambda-
-FN_NAME=`aws lambda list-functions --output table | fgrep $LAMBDA_FUNCTION_SEARCH | fgrep FunctionName | sed s/FunctionName\|// | sed "s/ //g" | sed s/\|//g`
+FN_NAME=$(aws lambda list-functions --output table | fgrep $LAMBDA_FUNCTION_SEARCH | fgrep FunctionName | sed "s/ //g" | sed s/FunctionName\|// | sed s/\|//g)
 DIR=`dirname $0`
 pushd $DIR >/dev/null
 # Create source package - everything under src/
