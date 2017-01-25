@@ -57,7 +57,7 @@
       "Properties" : {
         "Handler": "index.handler",
         "Role" : {"Fn::GetAtt":["DeploymentLambdaRole","Arn"]},
-        "Runtime" : "nodejs",
+        "Runtime" : "nodejs4.3",
         "Timeout" : 10,
         "Code" : {
           "S3Bucket" : "blog-deploy",
