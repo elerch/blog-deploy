@@ -29,7 +29,7 @@ function setupThemeSymLink(src, dest, cb) {
 }
 
 function copySite(src, bucket, destPrefix, siteVersion, cb) {
-  var copyOptions = {Bucket: bucket, ACL: 'public-read', StorageClass: 'REDUCED_REDUNDANCY'};
+  var copyOptions = {Bucket: bucket, ACL: 'public-read'};
   console.log('copying from ' + src + ' to ' + bucket + ':' + (destPrefix || '(root)'));
   if (siteVersion === 'development') {
       copyOptions.CacheControl = "max-age=0";
