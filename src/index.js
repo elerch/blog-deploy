@@ -28,11 +28,15 @@ function setupThemeSymLink(src, dest, cb) {
   });
 }
 
-function copySite(src, bucket, destPrefix, cb) {
+function copySite(src, bucket, destPrefix, siteVersion, cb) {
+  var copyOptions = {Bucket: bucket, ACL: 'public-read', StorageClass: 'REDUCED_REDUNDANCY'};
   console.log('copying from ' + src + ' to ' + bucket + ':' + (destPrefix || '(root)'));
+  if (siteVersion === 'development') {
+      copyOptions.CacheControl = "max-age=0";
+  }
   s3ext.copyAllRecursive(
     src, destPrefix, 'us-west-2',
-    {Bucket: bucket, ACL: 'public-read', StorageClass: 'REDUCED_REDUNDANCY'},
+    copyOptions,
     function complete(err) {
       if (err) {console.log('error during copy'); console.log(err); cb(err); return; }
       console.log('file copy complete');
@@ -50,7 +54,7 @@ function generateAndCopySite(unpackedLocation, options, s3Destination, cb) {
     function generated(err, location) {
       if (err) { cb(err); return; }
       console.log('generated ' + siteVersion);
-      copySite(location, s3Destination, bucketKeyPrefix, function copyComplete(copyErr) {
+      copySite(location, s3Destination, bucketKeyPrefix, siteVersion, function copyComplete(copyErr) {
         if (copyErr) { cb(err); return; }
         if (siteVersion === 'development') { cb(); return; }
         options.buildDrafts = true;
