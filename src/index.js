@@ -9,6 +9,8 @@ var fs           = require('fs');
 var path         = require('path');
 var childProcess = require('child_process');
 
+process.env.PATH = process.env.PATH + ':' + process.cwd();
+
 // exports and module exports are not the same in node, and this is confusing
 exports = module.exports;
 

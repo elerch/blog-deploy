@@ -1,0 +1,42 @@
+#!/bin/bash -e
+#
+# Prep python code for lambda
+#
+
+if [ -z "${1}" ] || [ -z "${2}" ]; then
+  echo "usage: $0 pip-package binary [target-zipfile]"
+  exit 1
+fi
+
+# Settings
+
+tmpdir=$(mktemp -d /tmp/lambda-XXXXXX)
+virtualenv=$tmpdir/virtual-env
+zipfile=$tmpdir/lambda.zip
+package=${1}
+binary=${2}
+target=${3:-lambda.zip}
+
+on_exit()
+{
+    echo rm -r $tmpdir
+}
+trap 'on_exit' EXIT
+
+# Build package in a virtualenv subshell
+
+(
+virtualenv -q $virtualenv
+source $virtualenv/bin/activate
+pip -q install $package
+)
+
+# Create ZIP file with AWS Lambda function and desired package
+rsync -a $virtualenv/bin/$binary $tmpdir/
+perl -pi -e '$_ ="#!/usr/bin/python\n" if $. == 1' $tmpdir/$binary
+(cd $tmpdir; zip -qr9 $zipfile $binary)
+(cd $virtualenv/lib/python2.7/site-packages; zip -qr9 $zipfile *)
+
+# Copy Lambda function ZIP file to target
+
+cp $zipfile $target

@@ -10,8 +10,9 @@ DIR=`dirname $0`
 pushd $DIR >/dev/null
 # Create source package - everything under src/
 pushd src >/dev/null && \
-zip -r $ZIP_FILE * -x "*node_modules*" -x "*test*" >/dev/null && \
-zip -r $ZIP_FILE                \
+../prep-python-lambda Pygments pygmentize $ZIP_FILE && \
+zip -qr9 $ZIP_FILE * -x "*node_modules*" -x "*test*" >/dev/null && \
+zip -qr9 $ZIP_FILE                \
  node_modules/follow-redirects  \
  node_modules/recursive-readdir \
  node_modules/async             \
