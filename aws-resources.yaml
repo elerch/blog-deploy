@@ -14,16 +14,6 @@ Resources:
       BucketName: blog-deploy
     DeletionPolicy: Retain
     Condition: CreateBucket
-  SNSTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: blog-deploy-committed
-      Subscription:
-        - Endpoint:
-            Fn::GetAtt:
-              - DeploymentLambda
-              - Arn
-          Protocol: lambda
   DeploymentLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -37,15 +27,6 @@ Resources:
       Code:
         S3Bucket: blog-deploy
         S3Key: deployment.zip
-  DeploymentLambdaSNSPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::GetAtt:
-          - DeploymentLambda
-          - Arn
-      Principal: sns.amazonaws.com
   DeploymentLambdaRole:
     Type: AWS::IAM::Role
     Properties:
