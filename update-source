@@ -6,24 +6,36 @@ BUCKET_NAME=blog-deploy
 # the resource name in the template
 LAMBDA_FUNCTION_SEARCH=blog-deploy-DeploymentLambda-
 FN_NAME=$(aws lambda list-functions --output table | fgrep $LAMBDA_FUNCTION_SEARCH | fgrep FunctionName | sed "s/ //g" | sed s/FunctionName\|// | sed s/\|//g)
-DIR=`dirname $0`
-pushd $DIR >/dev/null
-# Create source package - everything under src/
-pushd src >/dev/null && \
-../prep-python-lambda Pygments pygmentize $ZIP_FILE && \
-zip -qr9 $ZIP_FILE * -x "*node_modules*" -x "*test*" >/dev/null && \
-zip -qr9 $ZIP_FILE                \
- node_modules/follow-redirects  \
- node_modules/recursive-readdir \
- node_modules/async             \
- > /dev/null && \
-aws s3 mv $ZIP_FILE s3://$BUCKET_NAME/
-popd >/dev/null
+DIR="$(dirname "$0")"
+(
+  cd "$DIR" || exit
+  (
+    # Create source package - everything under src/
+    cd src || exit
 
-# Update function code
-aws lambda update-function-code \
-  --function-name $FN_NAME      \
-  --s3-bucket $BUCKET_NAME      \
-  --s3-key $ZIP_FILE 
-popd >/dev/null
+    # The first 3 node modules are direct dependencies, the rest are dependents
+    # of the original 3.
+    # We're also adding the system tar (which then means we have to run this
+    # on linux/amd64) because the nodejs10.x container environment does not
+    # have tar installed.
+    zip -qr9 $ZIP_FILE ./* -x "*node_modules*" -x "*test*" >/dev/null && \
+    zip -qr9 $ZIP_FILE                \
+     node_modules/follow-redirects  \
+     node_modules/recursive-readdir \
+     node_modules/async             \
+     node_modules/debug             \
+     node_modules/ms                \
+     node_modules/brace-expansion   \
+     node_modules/concat-map        \
+     node_modules/balanced-match    \
+     > /dev/null && \
+    zip -qr9 --junk-paths $ZIP_FILE "$(which tar)" "$(which gzip)" && \
+    aws s3 mv $ZIP_FILE s3://$BUCKET_NAME/
+  )
 
+  # Update function code
+  aws lambda update-function-code \
+    --function-name "$FN_NAME"      \
+    --s3-bucket $BUCKET_NAME      \
+    --s3-key $ZIP_FILE
+)

@@ -1,23 +1,23 @@
 'use strict';
 
-var async   = require('async');
-var recurse = require('recursive-readdir');
-var aws     = require('aws-sdk');
+let async   = require('async');
+let recurse = require('recursive-readdir');
+let aws     = require('aws-sdk');
 
-var path    = require('path');
-var fs      = require('fs');
+let path    = require('path');
+let fs      = require('fs');
 // exports and module exports are not the same in node, and this is confusing
 exports = module.exports;
 
 function clone (o) {
-  var ret = {};
+  let ret = {};
   Object.keys(o).forEach(function cp(val) {
     ret[val] = o[val];
   });
   return ret;
 }
 function contentTypeByName(fileName) {
-  var fn = fileName.toLowerCase();
+  let fn = fileName.toLowerCase();
 
   if (fn.indexOf('.html') >= 0) { return 'text/html'; }
   if (fn.indexOf('.css') >= 0) { return 'text/css'; }
@@ -31,16 +31,16 @@ function contentTypeByName(fileName) {
 }
 
 function copyAllRecursive(src, destKeyPrefix, region, params, cb) {
-  var absoluteSrc = path.resolve(src);
-  var len = absoluteSrc.length;
-  var s3 = new aws.S3({s3ForcePathStyle : true, region: region});
+  let absoluteSrc = path.resolve(src);
+  let len = absoluteSrc.length;
+  let s3 = new aws.S3({s3ForcePathStyle : true, region: region});
 
   recurse(absoluteSrc, function filesEnumerated(err, files){
     if (err) { cb(err); return; }
     async.each(
       files.map(function strip(item){return item.substr(len);}),
       function copyObject(item, asyncCb) {
-        var itemParams = clone(params || {});
+        let itemParams = clone(params || {});
         fs.readFile(path.join(absoluteSrc, item), function hazTheFile(fileErr, fileBuffer) {
           if (fileErr) { asyncCb(fileErr); return; }
           itemParams.Key = (destKeyPrefix + item).replace('//', '/');

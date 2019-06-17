@@ -1,14 +1,14 @@
 'use strict';
 
-var childProcess = require('child_process');
-var path         = require('path');
+let childProcess = require('child_process');
+let path         = require('path');
 
 // exports and module exports are not the same in node, and this is confusing
 exports = module.exports;
 
 function generateSite(location, options, cb) {
-  var hugoopts = '';
-  var hugo = 'hugo';
+  let hugoopts = '';
+  let hugo = 'hugo';
   if (options.theme) { hugoopts += ' --theme=' + options.theme; }
   if (options.buildDrafts) { hugoopts += ' --buildDrafts'; }
   // If this option is set we'll use hugo on the path

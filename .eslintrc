@@ -1,5 +1,5 @@
 {
-  "env": { "node": true },
+  "env": { "node": true, "es6": true },
   "rules": {
     "strict": [2, "global"],
     "semi": [2, "always"],
@@ -45,7 +45,6 @@
     "guard-for-in": 2,
     "no-alert": 2,
     "no-else-return": 1,
-    "no-empty-label": 2,
     "no-eq-null": 2,
     "no-eval": 2,
     "no-extra-bind": 2,

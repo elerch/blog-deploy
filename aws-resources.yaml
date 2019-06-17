@@ -22,8 +22,8 @@ Resources:
         Fn::GetAtt:
           - DeploymentLambdaRole
           - Arn
-      Runtime: nodejs4.3
-      Timeout: 10
+      Runtime: nodejs10.x
+      Timeout: 600
       Code:
         S3Bucket: blog-deploy
         S3Key: deployment.zip
@@ -38,6 +38,8 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: LambdaDeployS3
           PolicyDocument:

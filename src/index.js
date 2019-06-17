@@ -1,9 +1,10 @@
 'use strict';
 
-var awsfilter       = require('./awsfilter');
-var githubPull      = require('./github-pull');
-var hugo            = require('./hugo.js'); // distinguish from the binary
-var s3ext           = require('./s3-ext');
+let awsfilter       = require('./awsfilter');
+let githubPull      = require('./github-pull');
+let gitlabPull      = require('./gitlab-pull');
+let hugo            = require('./hugo.js'); // distinguish from the binary
+let s3ext           = require('./s3-ext');
 
 var fs           = require('fs');
 var path         = require('path');
@@ -15,8 +16,8 @@ process.env.PATH = process.env.PATH + ':' + process.cwd();
 exports = module.exports;
 
 function setupThemeSymLink(src, dest, cb) {
-  var themeSrc = path.join(src, 'themes');
-  var themeDst = path.join(dest, 'themes');
+  let themeSrc = path.join(src, 'themes');
+  let themeDst = path.join(dest, 'themes');
   fs.symlink(themeSrc, themeDst, function linkCallback(err){
     if (!err || err.code === 'EEXIST') { cb(); return; }
     // it's really an error, it doesn't just exist
@@ -31,10 +32,10 @@ function setupThemeSymLink(src, dest, cb) {
 }
 
 function copySite(src, bucket, destPrefix, siteVersion, cb) {
-  var copyOptions = {Bucket: bucket, ACL: 'public-read'};
+  let copyOptions = {Bucket: bucket, ACL: 'public-read'};
   console.log('copying from ' + src + ' to ' + bucket + ':' + (destPrefix || '(root)'));
   if (siteVersion === 'development') {
-      copyOptions.CacheControl = "max-age=0";
+    copyOptions.CacheControl = 'max-age=0';
   }
   s3ext.copyAllRecursive(
     src, destPrefix, 'us-west-2',
@@ -47,8 +48,8 @@ function copySite(src, bucket, destPrefix, siteVersion, cb) {
 }
 
 function generateAndCopySite(unpackedLocation, options, s3Destination, cb) {
-  var siteVersion = options.buildDrafts ? 'development' : 'production';
-  var bucketKeyPrefix = options.buildDrafts ? '/drafts' : '';
+  let siteVersion = options.buildDrafts ? 'development' : 'production';
+  let bucketKeyPrefix = options.buildDrafts ? '/drafts' : '';
   console.log('generating site for ' + siteVersion);
   hugo.generateSite(
     unpackedLocation,
