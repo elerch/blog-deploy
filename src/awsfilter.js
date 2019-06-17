@@ -6,3 +6,7 @@ exports = module.exports;
 exports.extractSnsMessage = function extractSnsMessage(event) {
   return JSON.parse(event.Records[0].Sns.Message);
 };
+
+exports.extractApiGwMessage = function extractSnsMessage(event) {
+  return event.body;
+};

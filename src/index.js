@@ -6,9 +6,14 @@ let gitlabPull      = require('./gitlab-pull');
 let hugo            = require('./hugo.js'); // distinguish from the binary
 let s3ext           = require('./s3-ext');
 
-var fs           = require('fs');
-var path         = require('path');
-var childProcess = require('child_process');
+let fs           = require('fs');
+let path         = require('path');
+let childProcess = require('child_process');
+
+// Providers must export the following:
+//   isSource(message)
+//   downloadTarball(message, callback(err, location)
+let supportedProviders = [ githubPull, gitlabPull ];
 
 process.env.PATH = process.env.PATH + ':' + process.cwd();
 
@@ -65,23 +70,26 @@ function generateAndCopySite(unpackedLocation, options, s3Destination, cb) {
       });
     }
   );
-
 }
-exports.handler = function updateSite(event, context) {
-  var snsMessage, repo, commitHash, shorthash, unpackDirectory;
-  console.log('Received event:', JSON.stringify(event, null, 2));
-  snsMessage = awsfilter.extractSnsMessage(event);
-  repo = snsMessage.repository;
-  commitHash = snsMessage.head_commit.id;
-  shorthash = githubPull.shortCommitId(commitHash);
-  unpackDirectory = githubPull.unpackDirectory(repo, shorthash);
 
-  console.log('downloading repository tarball: ' + unpackDirectory);
-  githubPull.downloadTarball(repo, shorthash, function downloaded(err, location) {
+exports.handler = function updateSite(event, context) {
+  let message, provider;
+  console.log('Received event:', JSON.stringify(event, null, 2));
+
+  message = awsfilter.extractApiGwMessage(event);
+  provider = supportedProviders.find(p => p.isSource(message) ? p : null);
+  if (!provider) {
+    console.log('could not find a provider for this event');
+    context.fail('could not find a provider');
+    return;
+  }
+  console.log('Found provider: ' + provider.name);
+  console.log('downloading repository tarball');
+  provider.downloadTarball(message, (err, location) => {
     if (err) { console.log(err); context.fail(new Error('error downlading tarball')); return; }
     console.log('tarball received/unpacked to: ' + location);
     setupThemeSymLink(process.cwd(), location, function linked(symErr) {
-      var options;
+      let options;
       if (symErr) { console.log(symErr); context.fail(new Error('error setting themes sym link')); return; }
       options = {
         theme: 'gindoro'
