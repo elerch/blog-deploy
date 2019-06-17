@@ -5,6 +5,14 @@ Parameters:
     Description: Create the bucket true/false [false]
     Type: String
     Default: 'false'
+  GitlabWebhookSecret:
+    Description: Secret for gitlab webhooks
+    Type: String
+    NoEcho: true
+  GitlabApiToken:
+    Description: API Token for accessing gitlab
+    Type: String
+    NoEcho: true
 Conditions:
   CreateBucket: !Equals [!Ref pCreateBucket, 'true']
 Resources:
@@ -27,6 +35,10 @@ Resources:
       Code:
         S3Bucket: blog-deploy
         S3Key: deployment.zip
+      Environment:
+        Variables:
+          GITLAB_WEBHOOK_SECRET: !Ref GitlabWebhookSecret
+          GITLAB_API_TOKEN: !Ref GitlabApiToken
   DeploymentLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -49,9 +61,144 @@ Resources:
                 Resource: arn:aws:s3:::emil.lerch.org/*
                 Action:
                   - s3:*
+  ApiGatewayCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: ApiGatewayLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
                   - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*
+                  - logs:GetLogEvents
+                  - logs:FilterLogEvents
+                Resource: "*"
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchLogsRole.Arn
+  WebhookApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: API used for Webhook requests
+      FailOnWarnings: true
+      Name: !Ref AWS::StackName
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:invokeFunction
+      FunctionName: !GetAtt DeploymentLambda.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebhookApi}/*'
+  WebhookApiStage:
+    DependsOn:
+      - ApiGatewayAccount
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref Deployment
+      MethodSettings:
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: "/*"
+      RestApiId: !Ref WebhookApi
+      StageName: LATEST
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - WebhookRequestPOST
+    Properties:
+      RestApiId: !Ref WebhookApi
+      StageName: Production
+  WebhookResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref WebhookApi
+      ParentId: !GetAtt WebhookApi.RootResourceId
+      PathPart: deploy
+  WebhookRequestPOST:
+    DependsOn: LambdaPermission
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeploymentLambda.Arn}/invocations'
+        IntegrationResponses:
+          - StatusCode: 200
+        RequestTemplates:
+          application/json: |
+            ##  See http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
+            ##  This template will pass through all parameters including path, querystring, header, stage variables, and context through to the integration endpoint via the body/payload
+            #set($allParams = $input.params())
+            {
+            "body" : $input.json('$'),
+            "params" : {
+            #foreach($type in $allParams.keySet())
+                #set($params = $allParams.get($type))
+            "$type" : {
+                #foreach($paramName in $params.keySet())
+                "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
+                    #if($foreach.hasNext),#end
+                #end
+            }
+                #if($foreach.hasNext),#end
+            #end
+            },
+            "stageVariables" : {
+            #foreach($key in $stageVariables.keySet())
+            "$key" : "$util.escapeJavaScript($stageVariables.get($key))"
+                #if($foreach.hasNext),#end
+            #end
+            },
+            "context" : {
+                "accountId" : "$context.identity.accountId",
+                "apiId" : "$context.apiId",
+                "apiKey" : "$context.identity.apiKey",
+                "authorizerPrincipalId" : "$context.authorizer.principalId",
+                "caller" : "$context.identity.caller",
+                "cognitoAuthenticationProvider" : "$context.identity.cognitoAuthenticationProvider",
+                "cognitoAuthenticationType" : "$context.identity.cognitoAuthenticationType",
+                "cognitoIdentityId" : "$context.identity.cognitoIdentityId",
+                "cognitoIdentityPoolId" : "$context.identity.cognitoIdentityPoolId",
+                "httpMethod" : "$context.httpMethod",
+                "stage" : "$context.stage",
+                "sourceIp" : "$context.identity.sourceIp",
+                "user" : "$context.identity.user",
+                "userAgent" : "$context.identity.userAgent",
+                "userArn" : "$context.identity.userArn",
+                "requestId" : "$context.requestId",
+                "resourceId" : "$context.resourceId",
+                "resourcePath" : "$context.resourcePath"
+                }
+            }
+      RequestParameters:
+        method.request.querystring.name: false
+      ResourceId: !Ref WebhookResource
+      RestApiId: !Ref WebhookApi
+      MethodResponses:
+        - StatusCode: 200
+Outputs:
+  RootUrl:
+    Description: Root URL of the API gateway
+    Value: !Sub 'https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com'

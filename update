@@ -1,2 +1,15 @@
 #!/bin/sh
-aws cloudformation update-stack --stack-name blog-deploy --template-body file://aws-resources.yaml --capabilities CAPABILITY_IAM
+if ! [ -r .gitlab_webhook_secret ]; then
+  echo "Must have a '.gitlab_webhook_secret' file available for read" >&2
+  exit 1
+fi
+if ! [ -r .gitlab_api_token ]; then
+  echo "Must have a '.gitlab_api_token' file available for read" >&2
+  exit 1
+fi
+aws cloudformation update-stack \
+  --stack-name blog-deploy \
+  --template-body file://aws-resources.yaml \
+  --parameters ParameterKey=GitlabWebhookSecret,ParameterValue="$(cat .gitlab_webhook_secret)" \
+               ParameterKey=GitlabApiToken,ParameterValue="$(cat .gitlab_api_token)" \
+  --capabilities CAPABILITY_IAM
