@@ -13,6 +13,10 @@ Parameters:
     Description: API Token for accessing gitlab
     Type: String
     NoEcho: true
+  ApiDomainName:
+    Description: Domain name for the API
+    Type: String
+    Default: 'deploy.lerch.org'
 Conditions:
   CreateBucket: !Equals [!Ref pCreateBucket, 'true']
 Resources:
@@ -128,12 +132,34 @@ Resources:
     Properties:
       RestApiId: !Ref WebhookApi
       StageName: Production
-  WebhookResource:
-    Type: AWS::ApiGateway::Resource
+  DomainCertificate:
+    Type: AWS::CertificateManager::Certificate
     Properties:
+      DomainName: !Ref ApiDomainName
+      ValidationMethod: DNS
+  DomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      RegionalCertificateArn: !Ref DomainCertificate
+      DomainName: !Ref ApiDomainName
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  BasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      BasePath: blog
+      DomainName: !Ref DomainName
       RestApiId: !Ref WebhookApi
-      ParentId: !GetAtt WebhookApi.RootResourceId
-      PathPart: deploy
+      Stage: Production
+  # We want the post below to be on the root resource, but we want the custom
+  # domain to use /blog, e.g. "https://deploy.lerch.org/blog"
+  # WebhookResource:
+  #   Type: AWS::ApiGateway::Resource
+  #   Properties:
+  #     RestApiId: !Ref WebhookApi
+  #     ParentId: !GetAtt WebhookApi.RootResourceId
+  #     PathPart: blog
   WebhookRequestPOST:
     DependsOn: LambdaPermission
     Type: AWS::ApiGateway::Method
@@ -194,7 +220,7 @@ Resources:
             }
       RequestParameters:
         method.request.querystring.name: false
-      ResourceId: !Ref WebhookResource
+      ResourceId: !GetAtt WebhookApi.RootResourceId #!Ref WebhookResource
       RestApiId: !Ref WebhookApi
       MethodResponses:
         - StatusCode: 200
