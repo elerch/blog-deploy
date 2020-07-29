@@ -12,8 +12,8 @@
   "author": "Emil Lerch",
   "license": "ISC",
   "devDependencies": {
-    "chai": "^3.4.1",
-    "mocha": "^6.1.4"
+    "chai": "^4.2.0",
+    "mocha": "^8.0.1"
   },
   "dependencies": {
     "async": "3.0.1",
